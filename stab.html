@@ -1,0 +1,160 @@
+<html>
+
+    <body style="background-color:black">
+        <br/><br/>
+        <input type="button" value="Clear" size="23" onclick="erase()">
+        <input type="button" value="Stabilise Stroke" size="23" onclick="stabilise()">
+        <br/><br/>
+        <canvas id="canvas" width="400" height="400"></canvas>
+    <script type="text/javascript">
+
+    var canvas, ctx, flag = false,
+        prevX = 0,
+        currX = 0,
+        prevY = 0,
+        currY = 0,
+        strokeEnded = false;
+    
+    function init() {
+        canvas = document.getElementById('canvas');
+        ctx = canvas.getContext("2d");
+        w = canvas.width;
+        h = canvas.height;
+    
+        canvas.addEventListener("mousemove", function (e) {
+            findxy('move', e)
+        }, false);
+        canvas.addEventListener("mousedown", function (e) {
+            findxy('down', e)
+        }, false);
+        canvas.addEventListener("mouseup", function (e) {
+            findxy('up', e)
+        }, false);
+        canvas.addEventListener("mouseout", function (e) {
+            findxy('out', e)
+        }, false);
+
+        ctx.fillStyle = 'gray';
+        ctx.fillRect(0, 0, w, h);
+    }
+    
+    function draw() {
+        ctx.beginPath();
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(currX, currY);
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.closePath();
+    }
+    
+    function erase() {
+        ctx.fillStyle = 'gray';
+        ctx.fillRect(0, 0, w, h);
+        strokeEnded = false;
+        directions = []
+    }
+
+    var directions = [];
+    var firstX, firstY;
+    
+    function findxy(reason, e) {
+        if(strokeEnded) return;
+
+        if (reason == 'down') {
+            firstX = currX = e.clientX - canvas.offsetLeft;
+            firstY = currY = e.clientY - canvas.offsetTop;
+    
+            flag = true;
+            ctx.beginPath();
+            ctx.fillStyle = 'black';
+            ctx.fillRect(currX, currY, 1, 1);
+            ctx.closePath();
+        }
+        if (reason == 'up' || reason == "out") {
+            flag = false;
+            strokeEnded = true;
+        }
+        if (reason == 'move') {
+            if (flag) {
+                prevX = currX;
+                prevY = currY;
+
+                currX = e.clientX - canvas.offsetLeft;
+                currY = e.clientY - canvas.offsetTop;
+
+                directions.push({x:currX-prevX,y:currY-prevY});
+
+                draw();
+            }
+        }
+    }
+    
+
+    function stabilise(increaseResolution) {
+        if(directions.length < 2) {
+            return;
+        }
+
+        ctx.fillStyle = 'gray';
+        ctx.fillRect(0, 0, w, h);
+
+        // Average values and draw
+
+        currX = firstX;
+        currY = firstY;
+
+        ctx.beginPath();
+        ctx.fillStyle = 'black';
+        ctx.fillRect(currX, currY, 1, 1);
+        ctx.closePath();
+
+        prevX = currX;
+        prevY = currY;
+        currX += directions[0].x;
+        currY += directions[0].y;
+
+        draw();
+
+        for (var i = 1; i < directions.length-1; i++) {
+            var lastDirection = directions[i-1];
+            var currentDirection = directions[i];
+            var nextDirection = directions[i+1];
+
+            var directionX = (lastDirection.x + currentDirection.x + nextDirection.x) / 3;
+            var directionY = (lastDirection.y + currentDirection.y + nextDirection.y) / 3;
+
+            prevX = currX;
+            prevY = currY;
+            currX += directionX;
+            currY += directionY;
+            draw();
+
+            directions[i] = {x:directionX, y:directionY};
+        }
+
+        var lastDirection = directions[directions.length-2];
+        var currentDirection = directions[directions.length-1];
+
+        var directionX = (lastDirection.x + currentDirection.x) / 2;
+        var directionY = (lastDirection.y + currentDirection.y) / 2;
+
+        prevX = currX;
+        prevY = currY;
+        currX += directionX;
+        currY += directionY;
+        draw();
+
+        directions[directions.length-1] = {x:directionX, y:directionY};
+
+
+
+        points = [];
+        
+    }
+
+    init();
+
+    </script>
+    </body>
+    </html>
