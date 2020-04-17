@@ -1,0 +1,2 @@
+Draw a line on the HTML canvas then press the stabilise button to smooth out the line. Works better if the line is drawn slowly.
+Press clear to reset.
